@@ -1,0 +1,153 @@
+Etape 6.1 :
+
+à quoi servent les différentes méthodes? en particulier, à quoi servent les méthodes ___enter__ et ___exit__?
+
+__init__ :
+
+C'est un constructeur. Son but principal est d'initialiser l'etat d'un objet en lui donnant des attributs à sa creation.
+
+Ici, il configure : 
+
+les coordonnées du serveur : host, port ; 
+les attributs de la memoire : segname, size ; 
+L'apparation du debugeur ou non : with_debug
+l'alloc, s'il est vrai, envoie au serveur la requete pour creer l'espace memoire avec la requete "PUT"
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+__enter__ (Demandé de maniere plus précise dans l'énoncé) :
+
+La méthode implemente les objets qui peuvent être utilisé avec "with"
+
+Ici :
+
+"__enter__" retourne pour rendre l'objet disponible dans "as mem"
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+request :
+
+Ici :
+
+"request" gere l'ouverture des soscket, connexion, envoi de commande (GET, POST...), lecture de la reponse, fermeture systematique du socket pour éviter de laisser des connnexions fantômes
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+debug :
+
+Ici :
+
+Il permet d'imprimer les messages commencant par "[debug]" si debug = True, rien sinon
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+__getitem__ : 
+
+Permet d'utiliser la syntaxe objet[index] pour lire une donnée.
+
+Ici :
+
+declanche la requete GET vers le serveur pour recuperer la valeur
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+__setitem__ :
+
+Permet d'utiliser la syntaxe objet[index] = valeur pour modifier une donnée
+
+Ici :
+
+La méthode declanche la requete "POST" qui met a jour la memoire
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+__exit__ (Demandé de maniere plus précise dans l'énoncé) : 
+
+"__exit__" est appelée à la sortie du "__with__" 
+
+Ici :
+
+Garantit la libération de la memoire, envoie une requete "DELETE"
+L'interet clé du Context Manager est que "__exit__" est toujours appelé, avec ou sans exception
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+__len__ :
+
+La methode "__len__" permet de definir le comportement de len(objet)
+
+Ici :
+
+Ca permet d'utiliser len(mem) qui renvoie la taille du segment
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+Etape 6.2 :
+
+En lançant deux clients en parallèle dans des segments de noms différents, risque-t-on d’observer une corruption mémoire? 
+
+j'ai lancé deux client de maniere simultané/en parallele sur deux segments, seg0 et seg1. Aucune erreur de corruption memoire n'est renvoyé 
+
+C'est ce qui est initialement voulu, du fait qu'on lance deux segments differents dont l'acces memoire ne peut ainsi pas s'entremeler
+
+Experimentation :
+
+commandes lancées pour l'exemple : 
+
+python3 client.py localhost 12345 seg0 100 --num_access 10000
+python3 client.py localhost 12345 seg1 100 --num_access 10000
+
+sur deux terminals differents
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+Etape 6.3 :
+
+But de l’étape :
+
+Permettre à plusieurs clients d’accéder au même segment memoire distant. Sans modification, chaque client envoie une requête PUT pour creer le segment, 
+ce qui provoque une erreur pour le deuxieme client si segment existe déjà.
+
+Modifications effectuées :
+
+remotememory.py : paramètre optionnel alloc (par défaut True) a été ajouté au constructeur. Si alloc True, client envoie une requête PUT pour créer le segment. 
+Sinon, il utilise un segment existant sans tenter de le recréer.
+
+La méthode __exit__ a également été modifiée pour envoyer la requête DELETE uniquement si alloc est True, evite qu’un client supprime un segment qu’il n’a pas créé.
+
+client.py : option --not-alloc a été ajoutée pour permettre de desactiver la création du segment.
+
+Tests réalisés :
+
+Deux clients ont été lancés en parallèle sur le même segment :
+
+Un premier client avec alloc=True (création segment)
+Un second client avec --not-alloc (utilisation segment d'avant)
+
+Observations :
+
+1 : Corruption mémoire détectée :
+
+Le client A écrit mem[42] = 17 et met à jour son tableau de controle local.
+Le client B écrit ensuite mem[42] = 99 (sa propre valeur aleatoire).
+Le client A relit mem[42] : il obtient 99 mais son tableau de contrôle indique 17.
+-> ControledMemory leve l'exception "Memory corruption detected".
+
+2 : Segment inexistant :
+
+Sans la modification de __exit__, le second client (alloc=False) enverrait quand
+meme un DELETE à la fin de son bloc with, supprimant le segment alors que le 
+premier client travaille dessus. C'est pour ca que "__exit__" doit 
+vérifier alloc avant d'envoyer DELETE.
+
+Explication :
+
+Le client qui a créé le segment peut terminer et envoyer une requête DELETE. Le segment est alors supprimé, mais l’autre client continue à l’utiliser. 
+Les requêtes GET échouent donc provoque une erreur côté client.
+
+Réponse aux questions :
+
+En lançant deux clients en parallèle sur le meme segment, il est possible d’observer une corruption memoire. 
+Cela est normal car plusieurs clients modifient la même memoire sans synchronisation.
+
+Les observations sont conformes aux attentes. Le comportement du systeme montre bien les limites d’un acces concurrent à une memoire partagée.

@@ -1,0 +1,68 @@
+Etape 7 :
+
+Le cache est implementé dans remotememory.py, les autres fichiers sont modifiés en conséquences : 
+Exemple : ajout --pagesize ; --cachesize
+
+Structure du cache : self.cache() -> {'data' : bytearray, 'dirty' : bool}
+le bytearray justifie l'utilisation de hex() et fromhex()
+
+c'est un dictionnaire python, il associe aux numeros de page : 
+
+data : un bytearray contenant les octets de la page
+dirty : booleen indiquant si la page a ete modifié mais pas envoyé au serveur
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+Algorithme : FIFO :
+    
+Quand le cache est plein, on enleve la premiere page du cache avec "next(iter(self.cache))" 
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+Utilisation du 'bit de saleté' :
+
+Quand on enleve une page :
+    si dirty = False : page pas modifée, on la supprime directement 
+    si dirty = True : page modifiée, donc on envoie POST au serveur avant de supprimer
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+Performance :
+
+sans cache : chaque mem[i] genere une requete GET ou POST
+
+avec cache : une page chargée en cache sert a toutes les ecritures et lectures sur ses octets   
+             Les pages lues mais non modifié (dirty = False) ne generent pas de POST = economise des requetes inutiles
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+Degré d'avancement :
+
+Fichiers modifiés :
+    mem_server_frontend.py : PUT étendu avec pagesize, GET et POST travaillent maintenant sur des pages entières (numéro de page)
+    server_mem_backend.py  : GET et POST travaillent sur des pages entières, travaille avec hex
+    remotememory.py : ajout du cache complet (charge_page, enleve_page, charge_page_absente, dirty bit)
+    client.py : ajout de --pagesize et --cachesize
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+Mesure Performance :
+
+Avec cache (pagesize=16, cachesize=256) :
+
+time python3 client.py localhost 12345 seg0 256 --pagesize 16 --cachesize 256 --num_accesses 100000 -> real 0m0.088s
+ 
+Sans cache (pagesize=segsize) :
+    
+time python3 client.py localhost 12345 seg0 256 --pagesize 256 --cachesize 256 --num_accesses 100000 -> real 0m0.081s
+
+Test echoué ! (surement code pas fonctionnel)
+
+Avec l'utilisation du parametre --sigma 1 qui crée des acces proches, le cache devient plus rapide, mais de tres peu :
+test effectué :
+
+time python3 client.py localhost 12345 seg0 256 --pagesize 16 --cachesize 256 --num_accesses 500000 --sigma 1 -> real 0.m0 403s
+
+time python3 client.py localhost 12345 seg0 256 --pagesize 256 --cachesize 256 --num_accesses 500000 --sigma 1 -> real 0.m0 417s
+
+Toutefois, sur plus grand reseau, le cache fait beaucoup moins de requetes, ce qui reduit le temps d'execution

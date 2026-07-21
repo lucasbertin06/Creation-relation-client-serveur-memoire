@@ -1,0 +1,68 @@
+import os, sys
+
+if len(sys.argv) != 2: # Verif nb arguments
+    print("Usage: python server_mem_backend.py memsize")
+    sys.exit(1)
+
+try : # Verif si argument int
+    size_mem = int(sys.argv[1])
+except :
+    print("Usage: python server_mem_backend.py memsize")
+    sys.exit(1)
+
+memory = bytearray([32] * size_mem) 
+
+while True :
+    try :
+        instruction = input()
+        mot = instruction.split()
+
+        cmd = mot[0] # Car .split() creer tableau
+        
+        if cmd == "POST" :
+            if len(mot) != 3 : # Ex : POST 10 76
+                print("Il faut 3 arguments !")
+                continue # ou continue (DEMANDER EN TP)
+
+            try :
+                i = int(mot[1])
+                o = int(mot[2])
+            except :
+                print("Les arguments doivent etre de type int !")
+                continue
+
+            if i < 0 or i >= size_mem :
+                print(f"error: index {i} out of bounds")
+            
+            elif o < 0 or o > 255 :
+                print(f"error: POST instruction requires a byte as a second argument '{mot[2]}' out of byte range (0-255)")
+                continue
+            
+            else :
+                memory[i] = o # POST remplace l'octet 32 postion mot[1] par l'octet mot[2] 
+                print("ok")
+                continue
+        
+        elif cmd == "GET" :
+            if len(mot) != 2 : # Ex : GET 10
+                print("Il faut 2 arguments !")
+                continue
+
+            try : # Verif type argument
+                i = int(mot[1])           # Demander si important d'avoir nommer i que pour GET
+            except :
+                print("L'argument doit etre de type int !")
+
+            if 0 <= i < size_mem: # On regarde si on est pas "out of bounds" (DEMANDER POUR EGALITE)
+                print(memory[i])
+            else :
+                print(f"error: index {i} out of bounds")
+            
+        else : # Juste si Instruction pas GET ou POST
+            print("Instruction non reconnue !")
+            continue
+
+    except EOFError :
+        print("bye")
+        break
+
