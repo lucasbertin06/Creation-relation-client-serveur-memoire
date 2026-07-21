@@ -1,6 +1,6 @@
 # Projet : Projet de système d’exploitation - L2 Université de Nice
 
-#### Lucas Bertin ; n°étudiant : 22403475
+#### Lucas Bertin 
 
 ## AUTO-EVALUATION 
 
