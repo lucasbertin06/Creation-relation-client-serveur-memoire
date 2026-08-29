@@ -1,4 +1,4 @@
-# Projet : Projet de système d’exploitation - L2 Université de Nice
+# Projet : Projet de système d’exploitation 
 
 #### Lucas Bertin 
 
