@@ -94,18 +94,14 @@ Mise en place du cache :
     2. Mise en place d'un algorithme FIFO pour gérer les pages à enlever du cache quand ce dernier est plein  
   
   
-## Estimation de la note   
-
-Note estimée : 15-16/20
+## Estimation   
 
 Explication :
 
-Je pense avoir globalement réussi de maniere correcte jusqu'à l'etape 6, les tests ont réussis, l'aide du professeur lors des séances de TP m'ont permis d'avoir un code compréhensible et structuré.
+Je pense avoir globalement réussi de maniere correcte jusqu'à l'etape 6, les tests ont réussis, des aides de personnes exetrieurs m'ont permis d'avoir un code compréhensible et structuré.
 
 Toutefois, à l'etape 7, mes tests pour gérer le gain de temps n'ont pas été réellement concluant, il y a tres peu voir aucunes amélioration au niveau du temps. 
 Je pense que le probleme vient surement de l'algorithme utilisé : FIFO, qui n'est pas forcement le plus adéquat dans la situation, dans le cas ou on eneleve du cache une page souvent utilisés.
 Apres quelques recherches, je pense que d'autres algorithmes auraient pu mieux convenir.
 
 Et je pense ne pas être à l'abris de quelques erreurs.
-
-Ainsi, j'en conclus que 15-16/20 est une estimation plutot correcte et réalistes.
